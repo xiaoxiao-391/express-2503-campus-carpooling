@@ -45,12 +45,12 @@ db.UserRole.belongsTo(db.User, { foreignKey: 'userId', onDelete: 'CASCADE', onUp
 // 建立 User 和 DriverInfo 的关联关系
 db.User.hasOne(db.DriverInfo, { foreignKey: 'driver_id', onDelete: 'CASCADE', onUpdate: 'CASCADE' });
 db.DriverInfo.belongsTo(db.User, { foreignKey: 'driver_id', onDelete: 'CASCADE', onUpdate: 'CASCADE' });
-// 建立 User 和 Trip 的关联关系
-db.User.hasMany(db.Trip, { foreignKey: 'publish_user_id', onDelete: 'CASCADE', onUpdate: 'CASCADE' });
-db.Trip.belongsTo(db.User, { foreignKey: 'publish_user_id', onDelete: 'CASCADE', onUpdate: 'CASCADE' });
-// 建立 User 和 Trip 的司机关联关系
-db.User.hasMany(db.Trip, { foreignKey: 'driver_id', onDelete: 'SET NULL', onUpdate: 'CASCADE' });
-db.Trip.belongsTo(db.User, { foreignKey: 'driver_id', onDelete: 'SET NULL', onUpdate: 'CASCADE' });
+// 建立 User 和 Trip 的关联关系，as 用来定义关联关系的别名
+db.User.hasMany(db.Trip, { foreignKey: 'publish_user_id', as: 'publishedTrips', onDelete: 'CASCADE', onUpdate: 'CASCADE' });
+db.Trip.belongsTo(db.User, { foreignKey: 'publish_user_id', as: 'publisher', onDelete: 'CASCADE', onUpdate: 'CASCADE' });
+// 建立 User 和 Trip 的司机关联关系，as 用来定义关联关系的别名
+db.User.hasMany(db.Trip, { foreignKey: 'driver_id', as: 'driverTrips', onDelete: 'SET NULL', onUpdate: 'CASCADE' });
+db.Trip.belongsTo(db.User, { foreignKey: 'driver_id', as: 'driver', onDelete: 'SET NULL', onUpdate: 'CASCADE' });
 // 建立 Trip 和 Order 的一对一关联关系
 db.Trip.hasOne(db.Order, { foreignKey: 'related_trip_id', onDelete: 'CASCADE', onUpdate: 'CASCADE' });
 db.Order.belongsTo(db.Trip, { foreignKey: 'related_trip_id', onDelete: 'CASCADE', onUpdate: 'CASCADE' });
