@@ -30,7 +30,7 @@ module.exports = app => {
     router.delete('/deleteTrip/:id', deleteTrip);
     router.put('/updateTrip/:id', updateTrip);
     router.post('/getTripsByStatus', getTripsByStatus);
-    router.get('/getUserTripsByMemberStatus', getUserTripsByMemberStatus);
+    router.get('/getUserTripsByMemberStatus/:status', getUserTripsByMemberStatus);
     // 使用 app.use() 方法将路由器对象挂载到 Express 应用上
     // '/api/trip' 是路由的前缀，这意味着所有通过 router 定义的路由都会添加这个前缀
     app.use('/api/trip', router);

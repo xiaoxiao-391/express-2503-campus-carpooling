@@ -23,7 +23,7 @@ module.exports = (sequelize, Sequelize) => {
             type: DataTypes.DECIMAL(10, 2),
             allowNull: false
         },
-        // 乘客状态（- 0: 待发布- 1：进行中- 2: 待支付- 3: 已支付- 4: 待评价- 5: 已评价）
+        // 乘客状态（- 0: 待发布- 1：进行中- 2: 待支付- 3: 已支付， 待评价- 4: 已评价）
     status: {
         type: DataTypes.TINYINT,
             allowNull: false,

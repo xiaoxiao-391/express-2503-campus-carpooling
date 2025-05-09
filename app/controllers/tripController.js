@@ -425,65 +425,58 @@ const getTripsByStatus = async (req, res) => {
     }
 };
 
+
 /**
- * 获取用户参与的行程及其状态
+ * 获取用户对应状态参与的行程
  */
 const getUserTripsByMemberStatus = async (req, res) => {
     const userId = req.user.userId; // 从认证中间件获取的用户ID
-    const { status } = req.query; // 从查询参数获取状态
+    
+    const  status  = req.params.status; // 从查询参数获取状态
 
     try {
-        // 查找用户参与的所有队伍成员
+        // 处理多个状态的情况
+        let statusCondition;
+        if (status.includes(',')) {
+            // 如果状态是以逗号分隔的字符串，转换为数组
+            statusCondition = status.split(',').map(s => Number(s));
+        } else {
+            // 否则直接转换为数字
+            statusCondition = [Number(status)];
+        }
+
+        // 查找用户参与的对应状态的行程
         const teamMembers = await TeamMembers.findAll({
-            where: { passenger_id: userId, status: status }, // 根据用户ID和状态过滤
+            where: { passenger_id: userId, status: statusCondition }, // 根据用户ID和状态过滤
             include: [
                 {
                     model: Trip,
+                    as: 'trip', // 确保使用正确的别名
                     include: [
                         {
                             model: User,
-                            as: 'publisher',
+                            as: 'publisher', // 使用模型定义中的别名
                             attributes: ['id', 'nickname', 'avatar', 'userPhone', 'real_name', 'real_status',
                                 [
                                     db.sequelize.literal(`(
                                         SELECT ROUND(AVG(score), 1)
                                         FROM ratings
-                                        WHERE rated_id = publisher.id
+                                        WHERE rated_id = \`trip\`.\`publish_user_id\` -- 使用正确的表字段和别名
                                     )`),
                                     'averageRating'
                                 ]
                             ]
                         }
-                    ]
+                    ],
+                    order: [['start_time', 'ASC']] // 按开始时间升序排列
                 }
             ]
         });
 
-        // 提取行程信息
-        const trips = teamMembers.map(member => ({
-            tripId: member.trip.id,
-            startName: member.trip.start_name,
-            endName: member.trip.end_name,
-            startTime: member.trip.start_time,
-            totalSeats: member.trip.total_seats,
-            occupiedSeats: member.trip.occupied_seats,
-            tripStatus: member.trip.trip_status,
-            memberStatus: member.status, // 用户在该行程中的状态
-            publisher: {
-                id: member.trip.publisher.id,
-                nickname: member.trip.publisher.nickname,
-                avatar: member.trip.publisher.avatar,
-                userPhone: member.trip.publisher.userPhone,
-                real_name: member.trip.publisher.real_name,
-                real_status: member.trip.publisher.real_status,
-                averageRating: member.trip.publisher.averageRating
-            }
-        }));
-
         res.status(200).json({
             code: 200,
             message: '获取用户参与的行程及其状态成功',
-            data: trips
+            data: teamMembers
         });
     } catch (error) {
         console.error('获取用户参与的行程失败', error);
