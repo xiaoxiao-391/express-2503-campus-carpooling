@@ -15,19 +15,19 @@ const login = async (req, res) => {
   try {
     // 验证固定验证码
     if (verifyCode !== '666666') {
-      return res.status(400).json({ error: '验证码错误' });
+      return res.status(400).json({ code: 400, error: '验证码错误' });
     }
 
     // 查找或创建用户
     let user = await User.findOne({ where: { userPhone } });
     // 自动注册新用户
     if (!user) {
-      await User.create({
+      user = await User.create({
         userPhone,
         nickname: `用户${userPhone.slice(-4)}`,
       });
-
     }
+
     // 检测该用户是否有对应的角色
     const existingRole = await UserRole.findOne({
       where: {
@@ -43,15 +43,19 @@ const login = async (req, res) => {
         role: Number(role)
       });
     }
+
     // 生成 JWT 令牌（需实现 signToken 函数）
     const token = signToken(user.id);
 
+    // 返回用户信息
     res.status(200).json({
+      code: 200,
       token,
+      userInfo: user,  // 返回用户的所有信息
       message: '登录成功'
     });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ code: 500, error: error.message });
   }
 };
 
@@ -65,7 +69,8 @@ const getUserInfo = async (req, res) => {
       include: [
         { model: UserRole, attributes: ['role'] },
         {
-          model: DriverInfo, attributes: [
+          model: DriverInfo, 
+          attributes: [
             'license_number',
             'vehicle_model',
             'plate_number',
@@ -76,12 +81,30 @@ const getUserInfo = async (req, res) => {
     });
 
     if (!user) {
-      return res.status(404).json({ error: '未找到该用户' });
+      return res.status(404).json({ code: 404, error: '未找到该用户' });
     }
-    console.log('user---', user.toJSON());
-    res.status(200).json(user);
+    
+    // 获取用户平均评分
+    const ratings = await db.sequelize.query(
+      `SELECT ROUND(AVG(score), 1) as averageRating, COUNT(*) as totalRatings 
+       FROM ratings 
+       WHERE rated_id = ?`,
+      {
+        replacements: [id],
+        type: db.sequelize.QueryTypes.SELECT
+      }
+    );
+    
+    const userData = {
+      ...user.toJSON(),
+      averageRating: ratings[0].averageRating || 0,
+      totalRatings: ratings[0].totalRatings || 0
+    };
+
+    res.status(200).json({ code: 200, data: userData });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error('获取用户信息错误:', error);
+    res.status(500).json({ code: 500, error: error.message });
   }
 };
 

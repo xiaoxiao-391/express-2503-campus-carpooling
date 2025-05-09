@@ -35,8 +35,18 @@ db.User = require('./user-model.js')(sequelize, Sequelize);
 db.UserRole = require('./userRole-model.js')(sequelize, Sequelize);
 db.DriverInfo = require('./driverInfo-model.js')(sequelize, Sequelize);
 db.Trip = require('./trip-model.js')(sequelize, Sequelize);
-db.Order = require('./order-model.js')(sequelize, Sequelize);
 db.Rating = require('./rating-model.js')(sequelize, Sequelize);
+
+// 引入聊天相关模型
+const chatModels = require('./chat-model.js')(sequelize, Sequelize);
+db.Chat = chatModels.Chat;
+db.ChatParticipant = chatModels.ChatParticipant;
+db.Message = chatModels.Message;
+db.Notice = chatModels.Notice;
+db.UserNoticeStatus = chatModels.UserNoticeStatus;
+
+// 引入乘客行程模型
+db.TeamMembers = require('./teammembers-model.js')(sequelize, Sequelize);
 
 // 模型间的关联关系
 // 建立 User 和 UserRole 的关联关系
@@ -51,27 +61,38 @@ db.Trip.belongsTo(db.User, { foreignKey: 'publish_user_id', as: 'publisher', onD
 // 建立 User 和 Trip 的司机关联关系，as 用来定义关联关系的别名
 db.User.hasMany(db.Trip, { foreignKey: 'driver_id', as: 'driverTrips', onDelete: 'SET NULL', onUpdate: 'CASCADE' });
 db.Trip.belongsTo(db.User, { foreignKey: 'driver_id', as: 'driver', onDelete: 'SET NULL', onUpdate: 'CASCADE' });
-// 建立 Trip 和 Order 的一对一关联关系
-db.Trip.hasOne(db.Order, { foreignKey: 'related_trip_id', onDelete: 'CASCADE', onUpdate: 'CASCADE' });
-db.Order.belongsTo(db.Trip, { foreignKey: 'related_trip_id', onDelete: 'CASCADE', onUpdate: 'CASCADE' });
-// 建立 User 和 Order 的关联关系
-db.User.hasMany(db.Order, { foreignKey: 'passenger_id', as: 'passengerOrders', onDelete: 'CASCADE', onUpdate: 'CASCADE' });
-db.Order.belongsTo(db.User, { foreignKey: 'passenger_id', as: 'passenger', onDelete: 'CASCADE', onUpdate: 'CASCADE' });
-
-db.User.hasMany(db.Order, { foreignKey: 'driver_id', as: 'driverOrders', onDelete: 'CASCADE', onUpdate: 'CASCADE' });
-db.Order.belongsTo(db.User, { foreignKey: 'driver_id', as: 'driver', onDelete: 'CASCADE', onUpdate: 'CASCADE' });
 
 // 建立 Trip 和 Rating 的关联关系
 db.Trip.hasMany(db.Rating, { foreignKey: 'related_trip_id', onDelete: 'CASCADE', onUpdate: 'CASCADE' });
 db.Rating.belongsTo(db.Trip, { foreignKey: 'related_trip_id', onDelete: 'CASCADE', onUpdate: 'CASCADE' });
 
 // 建立 User 和 Rating 的关联关系（评价人）
-db.User.hasMany(db.Rating, { foreignKey: 'rater_id', onDelete: 'CASCADE', onUpdate: 'CASCADE' });
-db.Rating.belongsTo(db.User, { foreignKey: 'rater_id', onDelete: 'CASCADE', onUpdate: 'CASCADE' });
+db.User.hasMany(db.Rating, { foreignKey: 'rater_id', as: 'givenRatings', onDelete: 'CASCADE', onUpdate: 'CASCADE' });
+db.Rating.belongsTo(db.User, { foreignKey: 'rater_id', as: 'raterUser', onDelete: 'CASCADE', onUpdate: 'CASCADE' });
 
 // 建立 User 和 Rating 的关联关系（被评价人）
-db.User.hasMany(db.Rating, { foreignKey: 'rated_id', onDelete: 'CASCADE', onUpdate: 'CASCADE' });
-db.Rating.belongsTo(db.User, { foreignKey: 'rated_id', onDelete: 'CASCADE', onUpdate: 'CASCADE' });
+db.User.hasMany(db.Rating, { foreignKey: 'rated_id', as: 'receivedRatings', onDelete: 'CASCADE', onUpdate: 'CASCADE' });
+db.Rating.belongsTo(db.User, { foreignKey: 'rated_id', as: 'ratedUser', onDelete: 'CASCADE', onUpdate: 'CASCADE' });
+
+// 建立 User 和 ChatParticipant 的关联关系
+db.User.hasMany(db.ChatParticipant, { foreignKey: 'user_id', onDelete: 'CASCADE', onUpdate: 'CASCADE' });
+db.ChatParticipant.belongsTo(db.User, { foreignKey: 'user_id', onDelete: 'CASCADE', onUpdate: 'CASCADE' });
+
+// 建立 User 和 Message 的关联关系
+db.User.hasMany(db.Message, { foreignKey: 'sender_id', as: 'sentMessages', onDelete: 'CASCADE', onUpdate: 'CASCADE' });
+db.Message.belongsTo(db.User, { foreignKey: 'sender_id', as: 'sender', onDelete: 'CASCADE', onUpdate: 'CASCADE' });
+
+// 建立 User 和 UserNoticeStatus 的关联关系
+db.User.hasMany(db.UserNoticeStatus, { foreignKey: 'user_id', onDelete: 'CASCADE', onUpdate: 'CASCADE' });
+db.UserNoticeStatus.belongsTo(db.User, { foreignKey: 'user_id', onDelete: 'CASCADE', onUpdate: 'CASCADE' });
+
+// 建立 Trip 和 TeamMembers 的关联关系
+db.Trip.hasMany(db.TeamMembers, { foreignKey: 'trip_id', onDelete: 'CASCADE', onUpdate: 'CASCADE' });
+db.TeamMembers.belongsTo(db.Trip, { foreignKey: 'trip_id', onDelete: 'CASCADE', onUpdate: 'CASCADE' });
+
+// 建立  TeamMembers和 User的关联关系
+db.TeamMembers.belongsTo(db.User, { foreignKey: 'passenger_id', onDelete: 'CASCADE', onUpdate: 'CASCADE' });
+db.User.hasOne(db.TeamMembers, { foreignKey: 'passenger_id', onDelete: 'CASCADE', onUpdate: 'CASCADE' });
 
 // 导出 db 对象，这样其他文件就可以通过 require 这个文件来访问 Sequelize 实例和模型
 module.exports = db;

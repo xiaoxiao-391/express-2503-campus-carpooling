@@ -1,0 +1,151 @@
+# 拼车系统项目编码规范
+
+## 1. 文件组织规范
+
+### 1.1 目录结构
+```
+app/
+  ├── models/        # 数据模型定义
+  ├── controllers/   # 业务逻辑控制器
+  ├── routes/        # 路由定义
+  ├── middleware/    # 中间件
+  ├── utils/         # 工具函数
+  └── config/        # 配置文件
+```
+
+### 1.2 文件命名
+- 模型文件：`*-model.js`（如：user-model.js）
+- 控制器文件：`*Controller.js`（如：userController.js）
+- 路由文件：`*Routes.js`（如：userRoutes.js）
+- 中间件文件：`*Middleware.js`（如：authMiddleware.js）
+- 工具文件：`*Utils.js`（如：validationUtils.js）
+
+## 2. 编码风格
+
+### 2.1 变量命名
+- 使用驼峰命名法（camelCase）
+- 常量使用大写下划线（UPPER_SNAKE_CASE）
+- 类名使用帕斯卡命名法（PascalCase）
+- 私有变量以下划线开头（_privateVar）
+
+### 2.2 函数命名
+- Controller 方法：动词 + 名词（如：createUser, updateProfile）
+- 中间件函数：动词 + 目的（如：validateToken, checkPermission）
+- 工具函数：动词 + 描述（如：formatDate, validateEmail）
+
+### 2.3 注释规范
+- 文件头部必须包含文件描述
+- 函数必须包含参数说明和返回值说明
+- 复杂逻辑必须添加行内注释
+- 使用 JSDoc 格式编写注释
+
+## 3. API 设计规范
+
+### 3.1 RESTful API
+- GET：获取资源
+- POST：创建资源
+- PUT：更新资源
+- DELETE：删除资源
+- PATCH：部分更新
+
+### 3.2 响应格式
+```javascript
+{
+  "success": boolean,
+  "data": object | array | null,
+  "message": string,
+  "error": string | null
+}
+```
+
+## 4. 错误处理
+
+### 4.1 错误类型
+- ValidationError：参数验证错误
+- AuthError：认证相关错误
+- BusinessError：业务逻辑错误
+- SystemError：系统级错误
+
+### 4.2 错误处理方式
+- 使用统一的错误处理中间件
+- 所有异步操作使用 try-catch
+- 错误信息统一管理
+
+## 5. 数据库操作
+
+### 5.1 模型定义
+- 清晰的字段定义
+- 必要的字段验证
+- 合适的索引设置
+- 预定义查询方法
+
+### 5.2 查询规范
+- 使用模型方法而非直接查询
+- 合理使用 populate
+- 注意查询性能优化
+
+## 6. 安全规范
+
+### 6.1 身份认证
+- 使用 JWT 进行身份验证
+- Token 过期时间合理设置
+- 敏感操作二次验证
+
+### 6.2 数据安全
+- 密码必须加密存储
+- 敏感信息传输加密
+- 防止 SQL 注入
+- 防止 XSS 攻击
+
+## 7. 测试规范
+
+### 7.1 单元测试
+- 控制器方法测试
+- 工具函数测试
+- 模型方法测试
+
+### 7.2 集成测试
+- API 端点测试
+- 数据流测试
+- 权限测试
+
+## 8. 版本控制
+
+### 8.1 Git 规范
+- feat：新功能
+- fix：修复 bug
+- docs：文档更新
+- style：代码格式
+- refactor：重构
+- test：测试相关
+- chore：构建过程或辅助工具的变动
+
+### 8.2 分支管理
+- main：主分支
+- develop：开发分支
+- feature/*：功能分支
+- hotfix/*：紧急修复分支
+
+## 9. 性能优化
+
+### 9.1 代码层面
+- 避免深层嵌套
+- 合理使用异步操作
+- 优化循环和递归
+
+### 9.2 数据库层面
+- 合理使用索引
+- 优化查询语句
+- 控制数据量
+
+## 10. 文档维护
+
+### 10.1 代码文档
+- API 文档及时更新
+- 重要功能说明
+- 配置说明
+
+### 10.2 变更记录
+- 版本更新说明
+- 重大变更记录
+- 问题修复记录 

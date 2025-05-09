@@ -20,14 +20,34 @@ module.exports = (sequelize, Sequelize) => {
                 key: 'id'
             }
         },
-        // 出发地
-        start_location: {
+        // 出发地名称
+        start_name: {
             type: DataTypes.STRING(100),
             allowNull: false
         },
-        // 目的地
-        end_location: {
+        // 出发地纬度
+        start_latitude: {
+            type: DataTypes.DECIMAL(10, 7),
+            allowNull: false
+        },
+        // 出发地经度
+        start_longitude: {
+            type: DataTypes.DECIMAL(10, 7),
+            allowNull: false
+        },
+        // 目的地名称
+        end_name: {
             type: DataTypes.STRING(100),
+            allowNull: false
+        },
+        // 目的地纬度
+        end_latitude: {
+            type: DataTypes.DECIMAL(10, 7),
+            allowNull: false
+        },
+        // 目的地经度
+        end_longitude: {
+            type: DataTypes.DECIMAL(10, 7),
             allowNull: false
         },
         // 出发时间
@@ -45,16 +65,26 @@ module.exports = (sequelize, Sequelize) => {
             type: DataTypes.TINYINT,
             allowNull: false,
         },
-        // 行程状态（0=待接单，1=进行中，2=已完成，3=取消）
+        // 行程状态（0=待发布，1=待接单，2=已接单,3=司机已到达出发地,4=用户上车，进行中,5=已到达目的地---开始更改乘客status）
         trip_status: {
             type: DataTypes.TINYINT,
             allowNull: false,
             defaultValue: 0
         },
-        // 队伍成员 ID
-        team_member_ids: {
-            type: DataTypes.JSON,
-            defaultValue: [],
+        // 基础价格（可选）
+        base_price: {
+            type: DataTypes.DECIMAL(10, 2),
+            allowNull: true
+        },
+        // 总价
+        total_price: {
+            type: DataTypes.DECIMAL(10, 2),
+            allowNull: true
+        },
+        // 行程距离（可选）
+        distance: {
+            type: DataTypes.DECIMAL(10, 2),
+            allowNull: true
         },
         // 备注信息
         remark: {

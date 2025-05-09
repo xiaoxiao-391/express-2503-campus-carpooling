@@ -12,9 +12,10 @@ const authenticateToken = (req, res, next) => {
 
   // 如果令牌不存在，返回401状态码，表示未授权
   if (!token) {
-    // console.log('没有提供令牌');
-    
-    return res.status(401).json({ message: '没有提供令牌' });
+    return res.status(401).json({ 
+      code: 401,
+      error: '未提供认证token' 
+    });
   }
 
   try {
@@ -22,19 +23,25 @@ const authenticateToken = (req, res, next) => {
     const decoded = verifyToken(token);
     // 如果解码失败或令牌无效，抛出错误
     if (!decoded) {
-      throw new Error('解码失败');
+      return res.status(401).json({ 
+        code: 401,
+        error: '无效的token' 
+      });
     }
-    console.log('解码结果',decoded)
-        // 将解码后的用户信息添加到请求对象中，以便在后续的中间件或路由处理器中使用
 
-    req.user = decoded;
+    // 将解码后的用户信息添加到请求对象中
+    req.user = {
+      userId: decoded.userId
+    };
+
     // 如果令牌验证成功，调用 next 函数，将控制权传递给下一个中间件或路由处理器
     next();
   } catch (error) {
-    console.log(error);
-    
-    // 如果捕获到错误，返回403状态码，表示禁止访问
-    res.status(403).json({ message: '令牌无效' });
+    console.error('Token验证错误:', error);
+    res.status(500).json({ 
+      code: 500,
+      error: '服务器错误' 
+    });
   }
 };
 

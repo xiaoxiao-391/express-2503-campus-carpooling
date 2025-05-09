@@ -22,8 +22,8 @@ const verifyToken = (token) => {
     // 使用jwt.verify方法验证token
     // 如果token有效，返回解码后的负载（payload）
     return jwt.verify(token, JWT_SECRET);
-  } catch {
-    // 如果token无效或验证过程中发生错误，捕获异常并返回null
+  } catch (error) {
+    console.error('Token验证错误:', error);
     return null;
   }
 };
