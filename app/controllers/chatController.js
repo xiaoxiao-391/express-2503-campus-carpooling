@@ -364,12 +364,22 @@ exports.getUnreadCount = async (req, res) => {
 exports.getNotices = async (req, res) => {
     try {
         const userId = req.user.userId;
+        const { type } = req.query; // 从查询参数获取类型
+
+        const whereClause = {
+            user_id: userId
+        };
+
+        // 如果传入了 type 参数，则添加到查询条件中
+        if (type) {
+            whereClause.type = type; // 过滤对应类型的通知
+        }
 
         const notices = await Notice.findAll({
             include: [
                 {
                     model: db.UserNoticeStatus,
-                    where: { user_id: userId },
+                    where: whereClause,
                     required: false
                 }
             ],
@@ -380,7 +390,7 @@ exports.getNotices = async (req, res) => {
             id: notice.id,
             title: notice.title,
             content: notice.content,
-            icon: notice.icon,
+            type: notice.type,
             time: notice.createdAt,
             isRead: notice.user_notice_statuses && notice.user_notice_statuses.length > 0
                 ? notice.user_notice_statuses[0].is_read
@@ -397,6 +407,7 @@ exports.getNotices = async (req, res) => {
         res.status(500).json({ code: 500, message: '获取通知列表失败' });
     }
 };
+
 
 // 标记通知为已读
 exports.markNoticeAsRead = async (req, res) => {

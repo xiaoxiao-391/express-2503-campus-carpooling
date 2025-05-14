@@ -74,7 +74,6 @@ const getUserInfo = async (req, res) => {
             'license_number',
             'vehicle_model',
             'plate_number',
-            'certification_status'
           ]
         }
       ]

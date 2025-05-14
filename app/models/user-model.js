@@ -11,7 +11,7 @@ module.exports = (sequelize, Sequelize) => {
             unique: true
         },
         real_status: {
-            // 实名状态：0-未实名 1-已实名
+            // 实名状态：0-未实名 1-待审核 2-已实名
             type: DataTypes.TINYINT,
             allowNull: false,
             defaultValue: 0,

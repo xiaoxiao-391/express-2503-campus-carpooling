@@ -1,6 +1,6 @@
 module.exports = (sequelize, Sequelize) => {
     const DataTypes = Sequelize.DataTypes;
-    
+
     // 聊天会话模型
     const Chat = sequelize.define('chats', {
         // 聊天会话名称（群聊）
@@ -87,12 +87,12 @@ module.exports = (sequelize, Sequelize) => {
             type: DataTypes.TEXT,
             allowNull: false
         },
-        // 通知图标
-        icon: {
-            type: DataTypes.STRING(50),
-            defaultValue: 'notification'
-        }});
-
+        // 通知类型
+        type: {
+            type: DataTypes.STRING(255),
+            allowNull: false
+        },
+    });
     // 创建用户通知状态模型
     const UserNoticeStatus = sequelize.define('user_notice_status', {
         id: {

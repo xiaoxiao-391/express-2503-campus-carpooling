@@ -9,7 +9,7 @@ const bodyParser = require('body-parser');
 // 引入 'cors' 模块，这是一个Node.js中间件，用于处理CORS请求,处理跨域问题
 const cors = require('cors');
 // 引入WebSocket管理器
-const socketManager = require('./app/utils/socketManager');
+const socketManager = require('./app/utils/socketManager.js');
 
 
 // 创建Express应用的实例
@@ -44,5 +44,5 @@ socketManager.initialize(server);
 // 使用server.listen代替app.listen启动HTTP服务器
 // 一旦服务器启动成功，将打印控制台日志提示项目已成功运行
 server.listen(3000, () => {
-    console.log('项目成功运行,端口3000');
+    console.log('自动更新项目成功运行,端口3000');
 });

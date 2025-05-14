@@ -30,15 +30,6 @@ module.exports = (sequelize, Sequelize) => {
             unique: true,
             allowNull: false,
         },
-        // 认证状态：0=待审核 1=通过 2=拒绝
-        certification_status: {
-            type: DataTypes.TINYINT,
-            allowNull: false,
-            defaultValue: 0,
-            validate: {
-                isIn: [[0, 1, 2]]
-            },
-        },
     });
     // 返回 User 模型，这样它就可以在其他地方被引用和使用
     return DriverInfo;

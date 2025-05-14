@@ -2,6 +2,7 @@
 const db = require('../models/index');
 // 从db对象中解构出需要的模型
 const { Trip, User, UserRole, DriverInfo, TeamMembers } = db;
+const { Op } = require('sequelize'); // 确保导入 Op
 // 引入队伍成员控制器
 
 /**
@@ -32,7 +33,7 @@ const getAllTrips = async (req, res) => {
                     attributes: ['id', 'nickname', 'avatar', 'real_name', 'real_status']
                 }
             ],
-            order: [['start_time', 'DESC']]
+            order: [['start_time', 'ASC']]
         });
 
         res.status(200).json({ code: 200, data: trips });
@@ -82,7 +83,7 @@ const getTripDetail = async (req, res) => {
                     include: [
                         {
                             model: DriverInfo,
-                            attributes: ['license_number', 'vehicle_model', 'plate_number', 'certification_status']
+                            attributes: ['license_number', 'vehicle_model', 'plate_number']
                         }
                     ]
                 },
@@ -233,10 +234,10 @@ const updateTrip = async (req, res) => {
             return res.status(404).json({ code: 404, error: '未找到该行程' });
         }
 
-        // 验证是否为发布者或司机
-        if (trip.publish_user_id !== userId && trip.driver_id !== userId) {
-            return res.status(403).json({ code: 403, error: '只有发布者或司机才能修改行程信息' });
-        }
+        // // 验证是否为发布者或司机
+        // if (trip.publish_user_id !== userId && trip.driver_id !== userId) {
+        //     return res.status(403).json({ code: 403, error: '只有发布者或司机才能修改行程信息' });
+        // }
 
         // // 检查行程状态
         // if (trip.trip_status !== 0) { // 只有在待接单状态下才能修改
@@ -344,27 +345,73 @@ const getUserJoinedTrips = async (req, res) => {
  */
 const getTripsByStatus = async (req, res) => {
     try {
-        const { trip_status } = req.body;
-        let statusCondition;
+        const {
+            time_filter,      // 时间筛选条件
+            location_filter,  // 地点筛选条件
+            price_filter,     // 价格筛选条件
+            search_text,      // 搜索框中的文本
+            page = 1,        // 当前页码，默认为1
+            page_size = 10,  // 每页数量，默认为10
+            trip_status       // 行程状态
+        } = req.body;
 
+        const whereClause = {};
+        const priceRange = price_filter ? price_filter.split('-').map(Number) : null;
 
-        // 处理多个状态的情况
-        if (trip_status && typeof trip_status === 'string' && trip_status.includes(',')) {
-            statusCondition = trip_status.split(',').map(s => Number(s));
-        } else if (trip_status !== undefined) {
-            // 如果是数字或数组直接使用，否则尝试转换为数字
-            if (Array.isArray(trip_status)) {
-                statusCondition = trip_status.map(s => Number(s));
-            } else {
-                statusCondition = [Number(trip_status)];
+        // 处理行程状态
+        if (trip_status) {
+            whereClause.trip_status = Array.isArray(trip_status) ? trip_status : [Number(trip_status)];
+        }
+
+        // 处理时间筛选条件
+        if (time_filter) {
+            const today = new Date();
+            const startOfDay = new Date(today.setHours(0, 0, 0, 0));
+            const endOfDay = new Date(today.setHours(23, 59, 59, 999));
+
+            if (time_filter === '今天') {
+                whereClause.start_time = { [Op.between]: [startOfDay, endOfDay] };
+            } else if (time_filter === '明天') {
+                startOfDay.setDate(startOfDay.getDate() + 1);
+                endOfDay.setDate(endOfDay.getDate() + 1);
+                whereClause.start_time = { [Op.between]: [startOfDay, endOfDay] };
+            } else if (time_filter === '本周内') {
+                const startOfWeek = new Date(today.setDate(today.getDate() - today.getDay()));
+                const endOfWeek = new Date(today.setDate(startOfWeek.getDate() + 6));
+                whereClause.start_time = { [Op.between]: [startOfWeek, endOfWeek] };
+            } else if (time_filter === '下周') {
+                const startOfNextWeek = new Date(today.setDate(today.getDate() + (7 - today.getDay())));
+                const endOfNextWeek = new Date(today.setDate(startOfNextWeek.getDate() + 6));
+                whereClause.start_time = { [Op.between]: [startOfNextWeek, endOfNextWeek] };
             }
         }
 
-        const whereClause = {};
-        if (statusCondition) {
-            whereClause.trip_status = statusCondition;
+        // 处理地点筛选条件
+        if (location_filter) {
+            if (location_filter === '学校') {
+                whereClause.start_name = { [Op.like]: '%大学%' }; // 含有"大学"
+            } else if (location_filter === '高铁站') {
+                whereClause.start_name = { [Op.like]: '%站%' }; // 含有"站"
+            } else if (location_filter === '机场') {
+                whereClause.start_name = { [Op.like]: '%机场%' }; // 含有"机场"
+            } else if (location_filter === '市区') {
+                whereClause.start_name = { [Op.notLike]: '%大学%' }; // 不含有"大学"
+                whereClause.start_name = { [Op.notLike]: '%站%' }; // 不含有"站"
+                whereClause.start_name = { [Op.notLike]: '%机场%' }; // 不含有"机场"
+            }
         }
 
+        // 处理价格筛选条件
+        if (priceRange && priceRange.length === 2) {
+            whereClause.total_price = { [Op.between]: [priceRange[0], priceRange[1]] };
+        }
+
+        // 处理搜索文本
+        if (search_text) {
+            whereClause.start_name = { [Op.like]: `%${search_text}%` }; // 模糊匹配地点
+        }
+
+        // 查询行程数据
         const trips = await Trip.findAll({
             where: whereClause,
             include: [
@@ -406,12 +453,14 @@ const getTripsByStatus = async (req, res) => {
                     include: [
                         {
                             model: DriverInfo,
-                            attributes: ['license_number', 'vehicle_model', 'plate_number', 'certification_status']
+                            attributes: ['license_number', 'vehicle_model', 'plate_number']
                         }
                     ]
                 }
             ],
-            order: [['start_time', 'DESC']]
+            order: [['start_time', 'ASC']],
+            limit: page_size,
+            offset: (page - 1) * page_size // 分页处理
         });
 
         res.status(200).json({
